@@ -24,6 +24,7 @@ const NAV = [
   ]},
   { group: 'Itens', items:[
     { id:'mesas-cadeiras', label:'Mesas e Cadeiras',      icon:'table-2' },
+    { id:'gradil-tendas',  label:'Gradil e Tendas',       icon:'tent' },
   ]},
   { group:'Gestão', items:[
     { id:'fornecedores',   label:'Fornecedores',          icon:'package' },
@@ -353,6 +354,7 @@ function go(id){
   view.classList.remove('view-enter'); void view.offsetWidth; // reinicia animação
   if      (id === 'visao-geral')    view.innerHTML = renderVisaoGeral();
   else if (id === 'mesas-cadeiras') view.innerHTML = renderMesasCadeiras();
+  else if (id === 'gradil-tendas')  view.innerHTML = renderGradilTendas();
   else                              view.innerHTML = renderPlaceholder(id);
   view.classList.add('view-enter');
 
@@ -393,7 +395,9 @@ function init(){
   
   document.getElementById('mcModal').hidden = true;
   document.getElementById('mcConfirm').hidden = true;
-  
+  document.getElementById('gtModal').hidden = true;
+  document.getElementById('gtConfirm').hidden = true;
+
   buildNav();
   go('visao-geral');
 
@@ -412,6 +416,8 @@ function init(){
     if (e.key === 'Escape') {
       if (!document.getElementById('mcModal').hidden)   mcCloseModal();
       if (!document.getElementById('mcConfirm').hidden) mcCloseConfirm();
+      if (!document.getElementById('gtModal').hidden)   gtCloseModal();
+      if (!document.getElementById('gtConfirm').hidden) gtCloseConfirm();
     }
     if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
       e.preventDefault();
@@ -679,8 +685,8 @@ async function mcSubmitModal() {
 
   try {
     const payload = rowIndex
-      ? { action: 'update', rowIndex: Number(rowIndex), ...row }
-      : { action: 'create', ...row };
+      ? { action: 'update', sheet: 'Mesas', rowIndex: Number(rowIndex), ...row }
+      : { action: 'create', sheet: 'Mesas', ...row };
     const data = await mcApiPost(payload);
     if (!data.ok) throw new Error(data.error);
     mcCloseModal();
@@ -716,11 +722,318 @@ async function mcDoDelete() {
   btn.textContent = 'Excluindo…';
 
   try {
-    const data = await mcApiPost({ action: 'delete', rowIndex });
+    const data = await mcApiPost({ action: 'delete', sheet: 'Mesas', rowIndex });
     if (!data.ok) throw new Error(data.error);
     mcCloseConfirm();
     toast('Registro excluído.');
     await mcLoad();
+  } catch (e) {
+    toast('Erro: ' + e.message);
+    btn.disabled    = false;
+    btn.textContent = 'Excluir';
+  }
+}
+
+/* ============================================================
+   GRADIL E TENDAS — módulo CRUD
+   ============================================================ */
+const GT_FIELDS = [
+  'item', 'posicionamento', 'estilo', 'quantidade',
+  'largura', 'comprimento', 'altura',
+  'tendas', 'fechamentoLonas', 'gradil',
+  'valorUnit', 'valorTotal',
+];
+const GT_NUMERIC = ['quantidade','largura','comprimento','altura','tendas','fechamentoLonas','gradil','valorUnit','valorTotal'];
+
+const GT = {
+  gasUrl: 'https://script.google.com/macros/s/AKfycbwDoxvz4AWyVbX4qijz7iUP9xjBlgQ3aDn1b9a1n863oUAQ2UC1VzpO7ZVHItpKiOcR/exec',
+  rows:   [],
+  loading: false,
+};
+
+/* ---------- API ---------- */
+async function gtApiGet(params) {
+  const url = new URL(GT.gasUrl);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, String(v)));
+  const res  = await fetch(url.toString(), { redirect: 'follow' });
+  const text = await res.text();
+  return JSON.parse(text);
+}
+
+async function gtApiPost(body) {
+  const res  = await fetch(GT.gasUrl, {
+    method: 'POST',
+    body:   JSON.stringify(body),
+    redirect: 'follow',
+  });
+  const text = await res.text();
+  return JSON.parse(text);
+}
+
+async function gtLoad() {
+  GT.loading = true;
+  gtRefreshContent();
+  try {
+    const data = await gtApiGet({ action: 'list-Gradil' });
+    if (!data.ok) throw new Error(data.error);
+    GT.rows = data.rows;
+  } catch (e) {
+    toast('Erro ao carregar dados: ' + e.message);
+    GT.rows = [];
+  }
+  GT.loading = false;
+  gtRefreshContent();
+}
+
+function gtRefreshContent() {
+  const el = document.getElementById('gt-content');
+  if (!el) return;
+  el.innerHTML = GT.loading ? renderGTLoading() : renderGTData();
+  if (window.lucide) lucide.createIcons();
+}
+
+/* ---------- RENDER ---------- */
+function renderGradilTendas() {
+  if (GT.gasUrl) setTimeout(() => gtLoad(), 0);
+  return `
+  <div class="view-head">
+    <div class="view-eyebrow">Itens</div>
+    <h1 class="view-title">Gradil e Tendas</h1>
+    <p class="view-desc">Distribuição de gradis e tendas por posicionamento e estilo, sincronizada com a Planilha de Trabalho.</p>
+  </div>
+  ${GT.gasUrl ? `<div id="gt-content">${renderGTLoading()}</div>` : renderGTSetup()}`;
+}
+
+function renderGTLoading() {
+  return `<div class="mc-loading"><i data-lucide="loader-2"></i> Carregando dados da planilha…</div>`;
+}
+
+function renderGTSetup() {
+  return `
+  <div class="mc-setup">
+    <div class="mc-setup-inner">
+      <div class="empty-ico"><i data-lucide="plug"></i></div>
+      <p class="empty-title">Conectar Google Sheets</p>
+      <p class="empty-lead" style="margin-inline:auto">Cole a URL do Apps Script da planilha para ativar o controle de gradil e tendas.</p>
+      <div class="mc-url-row">
+        <input class="mc-url-input" id="gtUrlInput" type="url"
+          placeholder="https://script.google.com/macros/s/…/exec" />
+        <button class="btn-new" onclick="gtSaveUrl()">
+          <i data-lucide="link"></i><span>Salvar URL</span>
+        </button>
+      </div>
+      <details class="mc-howto">
+        <summary>Como gerar a URL? ▾</summary>
+        <ol>
+          <li>Abra a planilha → <strong>Extensões → Apps Script</strong></li>
+          <li>Cole o conteúdo do arquivo <code>apps-script.gs</code></li>
+          <li>Clique em <strong>Implantar → Nova implantação</strong></li>
+          <li>Tipo: <em>Aplicativo da web</em> · Executar como: <em>Eu</em> · Acesso: <em>Qualquer pessoa</em></li>
+          <li>Autorize e copie a URL gerada — cole aqui</li>
+        </ol>
+      </details>
+    </div>
+  </div>`;
+}
+
+function renderGTData() {
+  GT.rows.shift();
+
+  const totalTendas = GT.rows.reduce((total, item) => total + (Number(item.tendas) || 0), 0);
+  const totalGradil = GT.rows.reduce((total, item) => total + (Number(item.gradil) || 0), 0);
+
+  const kpis = `
+  <div class="kpi-grid" style="margin-bottom:18px">
+    <div class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-label">Tendas total</span>
+        <span class="kpi-ico" style="background:rgba(189,147,249,.16);color:var(--highlight)"><i data-lucide="tent"></i></span>
+      </div>
+      <div class="kpi-value">${totalTendas.toLocaleString('pt-BR')} m²</div>
+      <div class="kpi-meta">Todos os posicionamentos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-label">Gradil total</span>
+        <span class="kpi-ico" style="background:rgba(136,227,247,.14);color:var(--cyan)"><i data-lucide="fence"></i></span>
+      </div>
+      <div class="kpi-value">${totalGradil.toLocaleString('pt-BR')} m</div>
+      <div class="kpi-meta">Todos os posicionamentos</div>
+    </div>
+  </div>`;
+
+  const fmtNum = v => Number(v || 0).toLocaleString('pt-BR');
+  const fmtCur = v => Number(v || 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+
+  const tbody = GT.rows.length
+    ? GT.rows.map(r => `
+        <tr>
+          <td>${r.item           || '<span style="color:var(--dim)">—</span>'}</td>
+          <td>${r.posicionamento || '<span style="color:var(--dim)">—</span>'}</td>
+          <td>${r.estilo         || '<span style="color:var(--dim)">—</span>'}</td>
+          <td class="td-num">${fmtNum(r.quantidade)}</td>
+          <td class="td-num">${fmtNum(r.largura)}</td>
+          <td class="td-num">${fmtNum(r.comprimento)}</td>
+          <td class="td-num">${fmtNum(r.altura)}</td>
+          <td class="td-num">${fmtNum(r.tendas)}</td>
+          <td class="td-num">${fmtNum(r.fechamentoLonas)}</td>
+          <td class="td-num">${fmtNum(r.gradil)}</td>
+          <td class="td-num">${fmtCur(r.valorUnit)}</td>
+          <td class="td-num">${fmtCur(r.valorTotal)}</td>
+          <td>
+            <div class="mc-actions">
+              <button class="btn-icon-sm" onclick="gtOpenModal(${r.rowIndex})" aria-label="Editar">
+                <i data-lucide="pencil"></i>
+              </button>
+              <button class="btn-icon-sm danger" onclick="gtConfirmDelete(${r.rowIndex})" aria-label="Excluir">
+                <i data-lucide="trash-2"></i>
+              </button>
+            </div>
+          </td>
+        </tr>`).join('')
+    : `<tr><td colspan="13"><div class="mc-empty">Nenhum registro. Clique em <strong>Adicionar</strong> para começar.</div></td></tr>`;
+
+  const table = `
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">Distribuição por posicionamento</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn-ghost" onclick="gtPromptUrl()" style="font-size:12px;padding:7px 12px">
+          <i data-lucide="link" style="width:13px;height:13px;vertical-align:-2px;margin-right:4px"></i>Alterar URL
+        </button>
+        <button class="btn-new" onclick="gtOpenModal(null)">
+          <i data-lucide="plus"></i><span>Adicionar</span>
+        </button>
+      </div>
+    </div>
+    <div class="mc-table-wrap">
+      <table class="mc-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Posicionamento</th>
+            <th>Estilo</th>
+            <th style="text-align:right">Qtd</th>
+            <th style="text-align:right">Largura (m)</th>
+            <th style="text-align:right">Compr. (m)</th>
+            <th style="text-align:right">Altura (m)</th>
+            <th style="text-align:right">Tendas (m²)</th>
+            <th style="text-align:right">Lonas (m²)</th>
+            <th style="text-align:right">Gradil (m)</th>
+            <th style="text-align:right">Valor unit.</th>
+            <th style="text-align:right">Valor total</th>
+            <th style="width:76px"></th>
+          </tr>
+        </thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+  </div>`;
+
+  return kpis + table;
+}
+
+/* ---------- URL config ---------- */
+function gtSaveUrl() {
+  const input = document.getElementById('gtUrlInput');
+  if (!input) return;
+  const url = input.value.trim();
+  if (!url) { toast('Cole a URL do Apps Script antes de salvar.'); return; }
+  GT.gasUrl = url;
+  localStorage.setItem('dashplan_gas_url_gradil', url);
+  go('gradil-tendas');
+}
+
+function gtPromptUrl() {
+  const url = prompt('URL do Apps Script (deixe vazio para desconectar):', GT.gasUrl);
+  if (url === null) return;
+  GT.gasUrl = url.trim();
+  localStorage.setItem('dashplan_gas_url_gradil', GT.gasUrl);
+  go('gradil-tendas');
+}
+
+/* ---------- Modal add/edit ---------- */
+function gtOpenModal(rowIndex) {
+  const row    = rowIndex ? GT.rows.find(r => r.rowIndex === rowIndex) : null;
+  const isEdit = !!row;
+
+  document.getElementById('gtModalTitle').textContent = isEdit ? 'Editar registro' : 'Novo registro';
+  document.getElementById('gtRowIndex').value = rowIndex || '';
+  GT_FIELDS.forEach(key => {
+    const el = document.getElementById('gt' + key.charAt(0).toUpperCase() + key.slice(1));
+    if (!el) return;
+    el.value = GT_NUMERIC.includes(key) ? (row?.[key] ?? '') : (row?.[key] || '');
+  });
+  document.getElementById('gtSubmitBtn').disabled    = false;
+  document.getElementById('gtSubmitBtn').textContent = 'Salvar';
+
+  document.getElementById('gtModal').hidden = false;
+  document.getElementById('gtModal').classList.toggle('hidden');
+  setTimeout(() => document.getElementById('gtItem').focus(), 50);
+  if (window.lucide) lucide.createIcons();
+}
+
+function gtCloseModal() {
+  document.getElementById('gtModal').hidden = true;
+  document.getElementById('gtModal').classList.toggle('hidden');
+}
+
+async function gtSubmitModal() {
+  const rowIndex = document.getElementById('gtRowIndex').value;
+  const row = {};
+  GT_FIELDS.forEach(key => {
+    const el = document.getElementById('gt' + key.charAt(0).toUpperCase() + key.slice(1));
+    row[key] = el ? el.value.trim() : '';
+  });
+
+  const btn = document.getElementById('gtSubmitBtn');
+  btn.disabled    = true;
+  btn.textContent = 'Salvando…';
+
+  try {
+    const payload = rowIndex
+      ? { action: 'update', sheet: 'Gradil', rowIndex: Number(rowIndex), ...row }
+      : { action: 'create', sheet: 'Gradil', ...row };
+    const data = await gtApiPost(payload);
+    if (!data.ok) throw new Error(data.error);
+    gtCloseModal();
+    toast(rowIndex ? 'Registro atualizado!' : 'Registro adicionado!');
+    await gtLoad();
+  } catch (e) {
+    toast('Erro: ' + e.message);
+    btn.disabled    = false;
+    btn.textContent = 'Salvar';
+  }
+}
+
+/* ---------- Confirm delete ---------- */
+function gtConfirmDelete(rowIndex) {
+  const row  = GT.rows.find(r => r.rowIndex === rowIndex);
+  const desc = row?.item ? `"${row.item}"` : `linha ${rowIndex}`;
+  document.getElementById('gtConfirmDesc').textContent =
+    `Deseja excluir ${desc}? Esta ação não pode ser desfeita.`;
+  document.getElementById('gtConfirm').dataset.rowIndex = rowIndex;
+  document.getElementById('gtDeleteBtn').disabled    = false;
+  document.getElementById('gtDeleteBtn').textContent = 'Excluir';
+  document.getElementById('gtConfirm').hidden = false;
+}
+
+function gtCloseConfirm() {
+  document.getElementById('gtConfirm').hidden = true;
+}
+
+async function gtDoDelete() {
+  const rowIndex = Number(document.getElementById('gtConfirm').dataset.rowIndex);
+  const btn = document.getElementById('gtDeleteBtn');
+  btn.disabled    = true;
+  btn.textContent = 'Excluindo…';
+
+  try {
+    const data = await gtApiPost({ action: 'delete', sheet: 'Gradil', rowIndex });
+    if (!data.ok) throw new Error(data.error);
+    gtCloseConfirm();
+    toast('Registro excluído.');
+    await gtLoad();
   } catch (e) {
     toast('Erro: ' + e.message);
     btn.disabled    = false;

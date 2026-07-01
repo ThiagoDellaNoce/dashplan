@@ -133,6 +133,91 @@
   </div>
 </div>
 
+<!-- Modal — Gradil e Tendas (add / edit) -->
+<div id="gtModal" class="modal-overlay hidden" hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="gtModalTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="gtModalTitle">Novo registro</span>
+      <button class="icon-btn" onclick="gtCloseModal()" aria-label="Fechar">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <input type="hidden" id="gtRowIndex" />
+    <div class="form-field">
+      <label class="form-label" for="gtItem">Item</label>
+      <input class="form-input" id="gtItem" type="text" placeholder="Ex: Gradil de contenção" />
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="gtPosicionamento">Posicionamento</label>
+      <input class="form-input" id="gtPosicionamento" type="text" placeholder="Ex: Entrada VIP, Perímetro…" />
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="gtEstilo">Estilo</label>
+      <input class="form-input" id="gtEstilo" type="text" placeholder="Ex: Piramidal, Chapelaria…" />
+    </div>
+    <div class="form-row-2">
+      <div class="form-field">
+        <label class="form-label" for="gtQuantidade">Quantidade</label>
+        <input class="form-input" id="gtQuantidade" type="number" min="0" placeholder="0" />
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="gtLargura">Largura (m linear)</label>
+        <input class="form-input" id="gtLargura" type="number" min="0" step="0.01" placeholder="0" />
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-field">
+        <label class="form-label" for="gtComprimento">Comprimento (m linear)</label>
+        <input class="form-input" id="gtComprimento" type="number" min="0" step="0.01" placeholder="0" />
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="gtAltura">Altura (m linear)</label>
+        <input class="form-input" id="gtAltura" type="number" min="0" step="0.01" placeholder="0" />
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-field">
+        <label class="form-label" for="gtTendas">Tendas (m²)</label>
+        <input class="form-input" id="gtTendas" type="number" min="0" step="0.01" placeholder="0" />
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="gtFechamentoLonas">Fechamento lonas (m²)</label>
+        <input class="form-input" id="gtFechamentoLonas" type="number" min="0" step="0.01" placeholder="0" />
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-field">
+        <label class="form-label" for="gtGradil">Gradil (m linear)</label>
+        <input class="form-input" id="gtGradil" type="number" min="0" step="0.01" placeholder="0" />
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="gtValorUnit">Valor unit.</label>
+        <input class="form-input" id="gtValorUnit" type="number" min="0" step="0.01" placeholder="0,00" />
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="gtValorTotal">Valor T.T.</label>
+      <input class="form-input" id="gtValorTotal" type="number" min="0" step="0.01" placeholder="0,00" />
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="gtCloseModal()">Cancelar</button>
+      <button class="btn-primary" id="gtSubmitBtn" onclick="gtSubmitModal()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm — exclusão de registro (Gradil e Tendas) -->
+<div id="gtConfirm" class="confirm-overlay hidden" hidden="true">
+  <div class="confirm-box" role="alertdialog" aria-modal="true">
+    <div class="confirm-title">Confirmar exclusão</div>
+    <p class="confirm-desc" id="gtConfirmDesc"></p>
+    <div class="confirm-actions">
+      <button class="btn-ghost" onclick="gtCloseConfirm()">Cancelar</button>
+      <button class="btn-danger" id="gtDeleteBtn" onclick="gtDoDelete()">Excluir</button>
+    </div>
+  </div>
+</div>
+
 <!-- Ícones -->
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="app.js"></script>
