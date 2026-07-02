@@ -13,10 +13,18 @@ import { registerOverlay, go } from './router.js';
 function capitalize(key){ return key.charAt(0).toUpperCase() + key.slice(1); }
 function fieldId(prefix, key){ return `${prefix}${capitalize(key)}`; }
 
+function isChecked(raw){
+  return raw === true || raw === 'true' || raw === 'TRUE' || raw === 'VERDADEIRO';
+}
+
 function defaultCellRender(col, row){
   const raw = row[col.key];
   if (col.format === 'number')   return fmtNumberBR(raw);
   if (col.format === 'currency') return fmtCurrencyBR(raw);
+  if (col.format === 'boolean')
+    return isChecked(raw)
+      ? `<span class="mc-badge-ok"><i data-lucide="check"></i></span>`
+      : '<span style="color:var(--dim)">—</span>';
   return raw || '<span style="color:var(--dim)">—</span>';
 }
 
@@ -108,7 +116,7 @@ export function createSheetCrudPage(cfg){
   }
 
   function renderData(){
-    state.rows.shift();
+    if (cfg.skipFirstRow !== false) state.rows.shift();
 
     const kpisHtml = `
     <div class="kpi-grid" style="margin-bottom:18px">
@@ -148,6 +156,9 @@ export function createSheetCrudPage(cfg){
       <div class="panel-head">
         <span class="panel-title">${cfg.tableTitle}</span>
         <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn-ghost" onclick="window.${P}Reload()" style="font-size:12px;padding:7px 12px">
+            <i data-lucide="rotate-cw" style="width:13px;height:13px;vertical-align:-2px;margin-right:4px"></i>Recarregar
+          </button>
           <button class="btn-ghost" onclick="window.${P}PromptUrl()" style="font-size:12px;padding:7px 12px">
             <i data-lucide="link" style="width:13px;height:13px;vertical-align:-2px;margin-right:4px"></i>Alterar URL
           </button>
@@ -173,6 +184,15 @@ export function createSheetCrudPage(cfg){
   /* ---------- RENDER: modal (campos vêm da config) ---------- */
   function fieldHtml(f){
     const id = fieldId(P, f.key);
+    if (f.type === 'checkbox') {
+      return `
+      <div class="form-field">
+        <label class="form-checkbox" for="${id}">
+          <input type="checkbox" id="${id}" />
+          <span>${f.label}</span>
+        </label>
+      </div>`;
+    }
     const input = f.type === 'select'
       ? `<select class="form-select" id="${id}">
           ${f.options.map(o => `<option value="${o.value}">${o.label}</option>`).join('')}
@@ -243,6 +263,7 @@ export function createSheetCrudPage(cfg){
     // onclick="..." inline precisa achar as funções no escopo global.
     window[`${P}SaveUrl`]       = saveUrl;
     window[`${P}PromptUrl`]     = promptUrl;
+    window[`${P}Reload`]        = load;
     window[`${P}OpenModal`]     = openModal;
     window[`${P}CloseModal`]    = closeModal;
     window[`${P}SubmitModal`]   = submitModal;
@@ -280,7 +301,8 @@ export function createSheetCrudPage(cfg){
     cfg.fields.forEach(f => {
       const el = document.getElementById(fieldId(P, f.key));
       if (!el) return;
-      el.value = row?.[f.key] ?? '';
+      if (f.type === 'checkbox') el.checked = row ? isChecked(row[f.key]) : false;
+      else el.value = row?.[f.key] ?? '';
     });
     document.getElementById(`${P}SubmitBtn`).disabled    = false;
     document.getElementById(`${P}SubmitBtn`).textContent = 'Salvar';
@@ -301,7 +323,8 @@ export function createSheetCrudPage(cfg){
     const row = {};
     cfg.fields.forEach(f => {
       const el = document.getElementById(fieldId(P, f.key));
-      row[f.key] = el ? el.value.trim() : '';
+      if (!el) { row[f.key] = ''; return; }
+      row[f.key] = f.type === 'checkbox' ? el.checked : el.value.trim();
     });
 
     const btn = document.getElementById(`${P}SubmitBtn`);

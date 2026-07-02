@@ -1,5 +1,5 @@
 // ============================================================
-//  DASHPLAN — Apps Script para as abas MESAS E CADEIRAS / GRADIL E TENDAS / PISOS E FECHAMENTO / BOX
+//  DASHPLAN — Apps Script para as abas MESAS E CADEIRAS / MOBILIA / GRADIL E TENDAS / PISOS E FECHAMENTO / BOX / BANHEIROS / BARRICADAS / PAINEL DE LED / ELÉTRICA
 //  Como usar:
 //  1. Abra a planilha > Extensions > Apps Script
 //  2. Cole este arquivo (substitua tudo)
@@ -11,12 +11,21 @@
 // Cada chave é o valor esperado no parâmetro "sheet" (POST) ou no sufixo
 // da action "list-<chave>" (GET). "columns" define a ordem das colunas na
 // planilha (coluna A = primeiro item) e as chaves usadas no JSON.
+// "startRow" (opcional, padrão 2) é a primeira linha de DADOS na planilha —
+// use quando a aba tem linhas de resumo/cabeçalho acima da linha 2 padrão.
+// "boolean" (opcional) marca colunas de checkbox (TRUE/FALSE).
 const SHEETS = {
   Mesas: {
     sheetName: 'MESAS E CADEIRAS',
     totalMarkers: ['total madeira', 'total plástico'],
     columns: ['local', 'descricao', 'mesas', 'cadeiras', 'tipo'],
     numeric: ['mesas', 'cadeiras'],
+  },
+  Mobilia: {
+    sheetName: 'MOBILIA',
+    totalMarkers: ['total geral'],
+    columns: ['local', 'item', 'quantidade', 'fornecedor'],
+    numeric: ['quantidade'],
   },
   Gradil: {
     sheetName: 'GRADIL E TENDAS',
@@ -51,6 +60,35 @@ const SHEETS = {
       'grau15', 'grau45', 'm020', 'm050', 'm070', 'm100', 'm150', 'm200', 'm300', 'm400', 'm500',
     ],
   },
+  Banheiros: {
+    sheetName: 'BANHEIROS',
+    startRow: 6, // cabeçalho na linha 5 (linhas 1-4 são contagem/quantitativo, ignoradas aqui)
+    totalMarkers: [],
+    columns: [
+      'check', 'referencial', 'setor', 'local', 'qtd', 'qtdPne',
+      'servico', 'montado', 'alterado',
+    ],
+    numeric: ['qtd', 'qtdPne'],
+    boolean: ['check', 'servico', 'montado', 'alterado'],
+  },
+  Barricadas: {
+    sheetName: 'BARRICADAS',
+    totalMarkers: ['total geral'],
+    columns: ['tipoPeca', 'setor', 'quantidade'],
+    numeric: ['quantidade'],
+  },
+  PainelLed: {
+    sheetName: 'PAINEL DE LED',
+    totalMarkers: ['total geral'],
+    columns: ['local', 'descricao', 'dimensao', 'metrosTotal'],
+    numeric: ['metrosTotal'],
+  },
+  Eletrica: {
+    sheetName: 'ELÉTRICA',
+    totalMarkers: ['total geral'],
+    columns: ['setor', 'areaServico', 'medida', 'especificacaoIluminacao', 'obs', 'quantidade', 'potencia'],
+    numeric: ['quantidade', 'potencia'],
+  },
 };
 
 function getSheetDef(key) {
@@ -58,13 +96,21 @@ function getSheetDef(key) {
   if (!cfg) return null;
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(cfg.sheetName);
   if (!sheet) return null;
-  return { sheet: sheet, columns: cfg.columns, numeric: cfg.numeric, totalMarkers: cfg.totalMarkers, sheetName: cfg.sheetName };
+  return {
+    sheet: sheet,
+    columns: cfg.columns,
+    numeric: cfg.numeric || [],
+    boolean: cfg.boolean || [],
+    totalMarkers: cfg.totalMarkers || [],
+    startRow: cfg.startRow || 2,
+    sheetName: cfg.sheetName,
+  };
 }
 
 // Encontra a primeira linha de total (para não editá-la/sobrescrevê-la)
 function findTotalRow(def) {
   const lastRow = def.sheet.getLastRow();
-  for (let i = 2; i <= lastRow; i++) {
+  for (let i = def.startRow; i <= lastRow; i++) {
     const val = String(def.sheet.getRange(i, 1).getValue()).trim().toLowerCase();
     if (def.totalMarkers.indexOf(val) !== -1) return i;
   }
@@ -74,11 +120,11 @@ function findTotalRow(def) {
 function listRows(def) {
   const totalRow = findTotalRow(def);
   const rows = [];
-  if (totalRow <= 2) return rows;
+  if (totalRow <= def.startRow) return rows;
 
-  const values = def.sheet.getRange(2, 1, totalRow - 2, def.columns.length).getValues();
+  const values = def.sheet.getRange(def.startRow, 1, totalRow - def.startRow, def.columns.length).getValues();
   values.forEach((row, i) => {
-    const obj = { rowIndex: i + 2 };
+    const obj = { rowIndex: i + def.startRow };
     def.columns.forEach((key, c) => { obj[key] = row[c]; });
     rows.push(obj);
   });
@@ -88,6 +134,7 @@ function listRows(def) {
 function rowValues(def, p) {
   return def.columns.map(key => {
     if (def.numeric.indexOf(key) !== -1) return Number(p[key]) || 0;
+    if (def.boolean.indexOf(key) !== -1) return p[key] === true || p[key] === 'true';
     return p[key] || '';
   });
 }

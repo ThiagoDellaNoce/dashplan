@@ -14,9 +14,14 @@ export const NAV = [
   ]},
   { group: 'Itens', items:[
     { id:'mesas-cadeiras',    label:'Mesas e Cadeiras',      icon:'table-2' },
+    { id:'mobilia',           label:'Mobília',               icon:'sofa' },
     { id:'gradil-tendas',     label:'Gradil e Tendas',       icon:'tent' },
     { id:'pisos-fechamento',  label:'Pisos e Fechamento',    icon:'layers' },
     { id:'box',               label:'Box',                   icon:'box' },
+    { id:'banheiros',         label:'Banheiros',             icon:'toilet' },
+    { id:'barricadas',        label:'Barricadas',            icon:'construction' },
+    { id:'painel-led',        label:'Painel de LED',         icon:'monitor' },
+    { id:'eletrica',          label:'Elétrica',              icon:'plug-zap' },
   ]},
   { group:'Gestão', items:[
     { id:'fornecedores',   label:'Fornecedores',          icon:'package' },
