@@ -13,8 +13,10 @@ export const NAV = [
     { id:'cronograma',     label:'Cronograma',            icon:'calendar-range' },
   ]},
   { group: 'Itens', items:[
-    { id:'mesas-cadeiras', label:'Mesas e Cadeiras',      icon:'table-2' },
-    { id:'gradil-tendas',  label:'Gradil e Tendas',       icon:'tent' },
+    { id:'mesas-cadeiras',    label:'Mesas e Cadeiras',      icon:'table-2' },
+    { id:'gradil-tendas',     label:'Gradil e Tendas',       icon:'tent' },
+    { id:'pisos-fechamento',  label:'Pisos e Fechamento',    icon:'layers' },
+    { id:'box',               label:'Box',                   icon:'box' },
   ]},
   { group:'Gestão', items:[
     { id:'fornecedores',   label:'Fornecedores',          icon:'package' },

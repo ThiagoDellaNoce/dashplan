@@ -9,7 +9,7 @@
   --bg:         #282A36;   /* fundo base */
   --text:       #F8F8F2;   /* texto principal */
   --highlight:  #BD93F9;   /* roxo claro — item ativo, links, foco */
-  --cyan:       #88E3F7;   /* ciano — informação / destaques frios */
+  --cyan:       #8BE9FD;   /* ciano — informação / destaques frios (tom oficial Dracula) */
 
   /* Superfícies derivadas (família Dracula) */
   --surface-0: #1E1F29;    /* moldura mais profunda */

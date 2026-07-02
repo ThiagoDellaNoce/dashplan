@@ -1,0 +1,63 @@
+import { createSheetCrudPage } from '../sheet-crud.js';
+import { GAS_URL } from '../gas-config.js';
+
+export const boxPage = createSheetCrudPage({
+  id:         'box',
+  idPrefix:   'bx',
+  eyebrow:    'Itens',
+  title:      'Box',
+  description:'Distribuição de box truss por local e bitola, sincronizada com a Planilha de Trabalho.',
+  tableTitle: 'Distribuição por local',
+  gasUrl:     GAS_URL,
+  sheetKey:   'Box',
+  labelField: 'local',
+
+  fields: [
+    { key:'local',        label:'Local',        type:'text',   width:'full', placeholder:'Ex: Palco, Backstage…' },
+    { key:'valorTotal',   label:'Valor T.T.',   type:'number', width:'half', min:0, step:0.01, placeholder:'0,00' },
+    { key:'valor',        label:'Valor',        type:'number', width:'half', min:0, step:0.01, placeholder:'0,00' },
+    { key:'und',          label:'Und',          type:'text',   width:'half', placeholder:'Ex: UN, PC…' },
+    { key:'metrosTotal',  label:'Metros T.T',   type:'number', width:'half', min:0, step:0.01, placeholder:'0' },
+    { key:'quantidade',   label:'Qntd',         type:'number', width:'half', min:0, placeholder:'0' },
+    { key:'cubo',         label:'Cubo',         type:'number', width:'half', min:0, step:0.01, placeholder:'0' },
+    { key:'grau15',       label:'15º',          type:'number', width:'half', min:0, placeholder:'0' },
+    { key:'grau45',       label:'45º',          type:'number', width:'half', min:0, placeholder:'0' },
+    { key:'m020',         label:'0,20 M',       type:'number', width:'half', min:0, placeholder:'0' },
+    { key:'m050',         label:'0,50 M',       type:'number', width:'half', min:0, placeholder:'0' },
+    { key:'m070',         label:'0,70 M',       type:'number', width:'half', min:0, placeholder:'0' },
+    { key:'m100',         label:'1,0 M',        type:'number', width:'half', min:0, placeholder:'0' },
+    { key:'m150',         label:'1,5 M',        type:'number', width:'half', min:0, placeholder:'0' },
+    { key:'m200',         label:'2,0 M',        type:'number', width:'half', min:0, placeholder:'0' },
+    { key:'m300',         label:'3,0 M',        type:'number', width:'half', min:0, placeholder:'0' },
+    { key:'m400',         label:'4,0 M',        type:'number', width:'half', min:0, placeholder:'0' },
+    { key:'m500',         label:'5,0 M',        type:'number', width:'half', min:0, placeholder:'0' },
+  ],
+
+  columns: [
+    { key:'local',        label:'Local' },
+    { key:'valorTotal',   label:'Valor T.T.', format:'currency', align:'right' },
+    { key:'valor',        label:'Valor',      format:'currency', align:'right' },
+    { key:'und',          label:'Und' },
+    { key:'metrosTotal',  label:'Metros T.T', format:'number',   align:'right' },
+    { key:'quantidade',   label:'Qntd',       format:'number',   align:'right' },
+    { key:'cubo',         label:'Cubo',       format:'number',   align:'right' },
+    { key:'grau15',       label:'15º',        format:'number',   align:'right' },
+    { key:'grau45',       label:'45º',        format:'number',   align:'right' },
+    { key:'m020',         label:'0,20 M',     format:'number',   align:'right' },
+    { key:'m050',         label:'0,50 M',     format:'number',   align:'right' },
+    { key:'m070',         label:'0,70 M',     format:'number',   align:'right' },
+    { key:'m100',         label:'1,0 M',      format:'number',   align:'right' },
+    { key:'m150',         label:'1,5 M',      format:'number',   align:'right' },
+    { key:'m200',         label:'2,0 M',      format:'number',   align:'right' },
+    { key:'m300',         label:'3,0 M',      format:'number',   align:'right' },
+    { key:'m400',         label:'4,0 M',      format:'number',   align:'right' },
+    { key:'m500',         label:'5,0 M',      format:'number',   align:'right' },
+  ],
+
+  kpis: [
+    { label:'Quantidade total', icon:'box', iconBg:'rgba(189,147,249,.16)', iconColor:'var(--highlight)',
+      compute: rows => rows.reduce((t, r) => t + (Number(r.quantidade) || 0), 0), meta:'Todos os locais' },
+    { label:'Metros total', icon:'ruler', iconBg:'rgba(136,227,247,.14)', iconColor:'var(--cyan)',
+      compute: rows => rows.reduce((t, r) => t + (Number(r.metrosTotal) || 0), 0), suffix:' m', meta:'Todos os locais' },
+  ],
+});

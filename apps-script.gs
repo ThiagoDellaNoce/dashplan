@@ -1,5 +1,5 @@
 // ============================================================
-//  DASHPLAN — Apps Script para as abas MESAS E CADEIRAS / GRADIL E TENDAS
+//  DASHPLAN — Apps Script para as abas MESAS E CADEIRAS / GRADIL E TENDAS / PISOS E FECHAMENTO / BOX
 //  Como usar:
 //  1. Abra a planilha > Extensions > Apps Script
 //  2. Cole este arquivo (substitua tudo)
@@ -28,6 +28,28 @@ const SHEETS = {
       'valorUnit', 'valorTotal',
     ],
     numeric: ['quantidade', 'largura', 'comprimento', 'altura', 'tendas', 'fechamentoLonas', 'gradil', 'valorUnit', 'valorTotal'],
+  },
+  Pisos: {
+    sheetName: 'PISO E FECHAMENTOS',
+    totalMarkers: ['total geral'],
+    columns: [
+      'item', 'posicionamento', 'altura', 'quantidade',
+      'largura', 'comprimento', 'areaM2', 'metragemLinear',
+      'valorUnit', 'valorTotal',
+    ],
+    numeric: ['altura', 'quantidade', 'largura', 'comprimento', 'areaM2', 'metragemLinear', 'valorUnit', 'valorTotal'],
+  },
+  Box: {
+    sheetName: 'BOX',
+    totalMarkers: ['total geral'],
+    columns: [
+      'local', 'valorTotal', 'valor', 'und', 'metrosTotal', 'quantidade', 'cubo',
+      'grau15', 'grau45', 'm020', 'm050', 'm070', 'm100', 'm150', 'm200', 'm300', 'm400', 'm500',
+    ],
+    numeric: [
+      'valorTotal', 'valor', 'metrosTotal', 'quantidade', 'cubo',
+      'grau15', 'grau45', 'm020', 'm050', 'm070', 'm100', 'm150', 'm200', 'm300', 'm400', 'm500',
+    ],
   },
 };
 
