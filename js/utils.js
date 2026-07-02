@@ -12,6 +12,7 @@ export function fmtRange(s, e){
 }
 
 export function countdown(event){
+  
   const today = new Date(); today.setHours(0,0,0,0);
   const start = new Date(event.startDate+'T00:00:00');
   const end   = new Date(event.endDate+'T00:00:00');
